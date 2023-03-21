@@ -18,8 +18,9 @@ import java.util.Map;
 @RequestMapping("/films")
 public class FilmController {
 
+    private static final LocalDate FIRST_FILM_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     private final Map<Integer, Film> films = new HashMap<>();
-    private Integer id = 1;
+    private int id = 1;
 
     @GetMapping
     public List<Film> findAll() {
@@ -58,6 +59,6 @@ public class FilmController {
     }
 
     private boolean isReleaseDateValid(Film film) {
-        return !film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28));
+        return !film.getReleaseDate().isBefore(FIRST_FILM_RELEASE_DATE);
     }
 }
