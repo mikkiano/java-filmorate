@@ -3,8 +3,6 @@ package ru.yandex.practicum.filmorate.model;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.controller.FilmController;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -12,10 +10,10 @@ import javax.validation.Validator;
 import java.time.LocalDate;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FilmValidationTest {
-
     private static Validator validator;
     private static Film film;
 
@@ -87,38 +85,35 @@ class FilmValidationTest {
 
     @Test
     public void wrongFilmReleaseDateTest() {
-        FilmController filmController = new FilmController();
-
         film.setName("Name");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(1800, 1, 1));
         film.setDuration(10);
 
-        assertThrows(ValidationException.class, () -> filmController.createFilm(film));
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
     public void normalFilmReleaseDateTest() {
-        FilmController filmController = new FilmController();
-
         film.setName("Name");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(1900, 1, 1));
         film.setDuration(10);
 
-        assertEquals(film, filmController.createFilm(film));
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
+        assertTrue(violations.isEmpty());
     }
 
     @Test
     public void borderFilmReleaseDateTest() {
-        FilmController filmController = new FilmController();
-
         film.setName("Name");
         film.setDescription("Desc");
         film.setReleaseDate(LocalDate.of(1895, 12, 28));
         film.setDuration(10);
 
-        assertEquals(film, filmController.createFilm(film));
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
+        assertTrue(violations.isEmpty());
     }
 
     @Test
