@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.FilmNotExistException;
@@ -14,14 +15,11 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FilmService {
+    private static final Comparator<Film> FILM_POPULARITY_DESC = Comparator.comparingInt((Film o) -> o.getLikes().size()).reversed();
     private final FilmStorage filmStorage;
     private final UserService userService;
-
-    public FilmService(FilmStorage filmStorage, UserService userService) {
-        this.filmStorage = filmStorage;
-        this.userService = userService;
-    }
 
     public List<Film> findAll() {
         return filmStorage.findAll();
@@ -79,7 +77,7 @@ public class FilmService {
     public List<Film> getMostPopularFilms(int count) {
         return filmStorage.findAll()
                 .stream()
-                .sorted(Comparator.comparingInt((Film o) -> o.getLikes().size()).reversed())
+                .sorted(FILM_POPULARITY_DESC)
                 .limit(count)
                 .collect(Collectors.toList());
     }
