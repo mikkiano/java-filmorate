@@ -54,7 +54,7 @@ public class FilmService {
             User user = userService.getUserById(userId);
 
             film.getLikes().add(userId);
-            log.debug("Фильму с id {} поставил лайк пользователь с id {}", id, userId);
+            log.debug("Фильму с id {} поставил лайк пользователь {} с id {}", id, user.getName(), userId);
             return film;
         } catch (UserNotExistException | FilmNotExistException e) {
             log.error(e.getMessage());
@@ -68,7 +68,7 @@ public class FilmService {
             User user = userService.getUserById(userId);
 
             film.getLikes().remove(userId);
-            log.debug("Фильму с id {} убрал лайк пользователь с id {}", id, userId);
+            log.debug("Фильму с id {} убрал лайк пользователь {} с id {}", id, user.getName(), userId);
             return film;
         } catch (UserNotExistException | FilmNotExistException e) {
             log.error(e.getMessage());

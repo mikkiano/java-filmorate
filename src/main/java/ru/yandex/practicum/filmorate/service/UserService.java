@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.exception.UserNotExistException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -108,10 +107,8 @@ public class UserService {
             Set<Integer> userFriends = user.getFriends();
             Set<Integer> otherUserFriends = otherUser.getFriends();
 
-            List<Integer> commonFriendsId = new ArrayList<>(userFriends);
-            commonFriendsId.retainAll(otherUserFriends);
-
-            return commonFriendsId.stream()
+            return userFriends.stream()
+                    .filter(otherUserFriends::contains)
                     .mapToInt(friendId -> friendId)
                     .mapToObj(this::getUserById)
                     .collect(Collectors.toList());

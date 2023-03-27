@@ -33,7 +33,7 @@ public class InMemoryUserStorage implements UserStorage {
             users.put(user.getId(), user);
             return user;
         } else {
-            throw new UserNotExistException();
+            throw new UserNotExistException(String.format("Пользователя с id %d не существует", user.getId()));
         }
     }
 

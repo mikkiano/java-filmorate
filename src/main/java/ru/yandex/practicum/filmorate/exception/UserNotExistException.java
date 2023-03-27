@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.exception;
 
 public class UserNotExistException extends RuntimeException {
     public UserNotExistException() {
-        super();
     }
 
     public UserNotExistException(String message) {
