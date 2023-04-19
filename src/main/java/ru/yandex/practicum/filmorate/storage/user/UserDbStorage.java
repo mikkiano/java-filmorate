@@ -79,12 +79,12 @@ public class UserDbStorage implements UserStorage {
         String acceptance = "SELECT * FROM USER_FRIEND WHERE USER_ID = ? AND FRIEND_ID = ?";
         SqlRowSet userFriendsRows = jdbcTemplate.queryForRowSet(acceptance, friendId, userId);
         if (userFriendsRows.next()) {
-            String friendAccept = "INSERT INTO USER_FRIEND (USER_ID, FRIEND_ID, IS_ACCEPTED) VALUES (?, ?, 'true')";
+            String friendAccept = "MERGE INTO USER_FRIEND KEY (USER_ID, FRIEND_ID, IS_ACCEPTED) VALUES (?, ?, 'true')";
             jdbcTemplate.update(friendAccept, userId, friendId);
             String userAccept = "UPDATE USER_FRIEND SET IS_ACCEPTED = TRUE WHERE USER_ID = ? AND FRIEND_ID = ?";
             jdbcTemplate.update(userAccept, friendId, userId);
         } else {
-            String notAccepted = "INSERT INTO USER_FRIEND (USER_ID, FRIEND_ID) VALUES (?, ?)";
+            String notAccepted = "MERGE INTO USER_FRIEND KEY (USER_ID, FRIEND_ID, IS_ACCEPTED) VALUES (?, ?, 'false')";
             jdbcTemplate.update(notAccepted, userId, friendId);
         }
     }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
@@ -30,7 +31,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> findAll() {
-        String sql = "SELECT * FROM FILM";
+        String sql = "SELECT F.*, M.ID AS MPA_ID, M.NAME AS MPA_NAME FROM FILM F JOIN MPA M on F.MPA_ID = M.ID";
         List<Film> films = jdbcTemplate.query(sql, this::mapRowToFilm);
         return films;
     }
@@ -122,6 +123,9 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     public void addLike(int id, int userId) {
+        if (likeExists(id, userId)) {
+            return;
+        }
         String sqlFilmsLikes = "INSERT INTO FILM_LIKE (FILM_ID, USER_ID) VALUES (?,?)";
         jdbcTemplate.update(sqlFilmsLikes, id, userId);
         String sqlFilms = "UPDATE FILM SET RATE = RATE + 1 WHERE ID = ?";
@@ -129,15 +133,27 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     public void removeLike(int id, int userId) {
+        if (!likeExists(id, userId)) {
+            return;
+        }
         String sqlFilmsLikes = "DELETE FROM FILM_LIKE WHERE FILM_ID = ? AND USER_ID = ?";
         jdbcTemplate.update(sqlFilmsLikes, id, userId);
         String sqlFilms = "UPDATE FILM SET RATE = RATE - 1 WHERE ID = ?";
         jdbcTemplate.update(sqlFilms, id);
     }
 
+    private boolean likeExists(int filmId, int userId) {
+        String likeExists = "SELECT 1 FROM FILM_LIKE WHERE FILM_ID = ? AND USER_ID = ?";
+        SqlRowSet userFriendsRows = jdbcTemplate.queryForRowSet(likeExists, filmId, userId);
+        return userFriendsRows.next();
+    }
+
     @Override
     public List<Film> getMostPopularFilms(int count) {
-        String sql = "SELECT * FROM FILM ORDER BY RATE DESC LIMIT ?";
+        String sql = "SELECT F.*, M.ID AS MPA_ID, M.NAME AS MPA_NAME " +
+                "FROM FILM F JOIN MPA M on F.MPA_ID = M.ID " +
+                "ORDER BY RATE DESC " +
+                "LIMIT ?";
         List<Film> films = jdbcTemplate.query(sql, this::mapRowToFilm, count);
         return films;
     }
@@ -150,7 +166,10 @@ public class FilmDbStorage implements FilmStorage {
                 .releaseDate((resultSet.getDate("RELEASE_DATE")).toLocalDate())
                 .duration(resultSet.getInt("DURATION"))
                 .rate(resultSet.getInt("RATE"))
-                .mpa(mpaStorage.getMpaById(resultSet.getInt("MPA_ID")).orElseThrow(ValidationException::new))
+                .mpa(Mpa.builder()
+                        .id(resultSet.getInt("MPA_ID"))
+                        .name(resultSet.getString("MPA_NAME"))
+                        .build())
                 .genres(getFilmsGenre(resultSet.getInt("ID")))
                 .build();
     }
