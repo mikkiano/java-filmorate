@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -9,14 +8,17 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserService {
+
     private final UserStorage userStorage;
+
+    public UserService(UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     public List<User> findAll() {
         return userStorage.findAll();
@@ -32,92 +34,47 @@ public class UserService {
     }
 
     public User updateUser(User user) {
-        try {
-            user = userStorage.updateUser(user);
-            log.debug("Был обновлен пользователь {} c id {}", user.getName(), user.getId());
-            return user;
-        } catch (UserNotExistException e) {
-            log.error("Пользователя c id {} не существует", user.getId());
-            throw e;
-        }
+        userStorage.getUserById(user.getId()).orElseThrow(UserNotExistException::new);
+        user = userStorage.updateUser(user);
+        log.debug("Был обновлен пользователь {} c id {}", user.getName(), user.getId());
+        return user;
     }
 
     public User addFriend(int userId, int friendId) {
-        try {
-            User user = userStorage.getUserById(userId);
-            User friend = userStorage.getUserById(friendId);
+        User user = userStorage.getUserById(userId).orElseThrow(UserNotExistException::new);
+        User friend = userStorage.getUserById(friendId).orElseThrow(UserNotExistException::new);
 
-            user.getFriends().add(friendId);
-            friend.getFriends().add(userId);
-            log.debug("Пользователю с id {} добавлен друг с id {}", userId, friendId);
-            log.debug("Пользователю с id {} добавлен друг с id {}", friendId, userId);
+        userStorage.addFriend(userId, friendId);
+        log.debug("Пользователю с id {} добавлен друг с id {}", userId, friendId);
 
-            return user;
-        } catch (UserNotExistException e) {
-            log.error(e.getMessage());
-            throw e;
-        }
+        return user;
     }
 
-    public User deleteFriend(int userId, int friendId) {
-        try {
-            User user = userStorage.getUserById(userId);
-            User friend = userStorage.getUserById(friendId);
+    public void deleteFriend(int userId, int friendId) {
+        userStorage.getUserById(userId).orElseThrow(UserNotExistException::new);
+        userStorage.getUserById(friendId).orElseThrow(UserNotExistException::new);
 
-            if (user.getFriends().remove(friendId)) {
-                log.debug("У пользователя с id {} удален друг с id {}", userId, friendId);
-            } else {
-                log.warn("У пользователя с id {} не было друга с id {}", userId, friendId);
-            }
-
-            if (friend.getFriends().remove(userId)) {
-                log.debug("У пользователя с id {} удален друг с id {}", friendId, userId);
-            } else {
-                log.warn("У пользователя с id {} не было друга с id {}", friendId, userId);
-            }
-            return user;
-        } catch (UserNotExistException e) {
-            log.error(e.getMessage());
-            throw e;
-        }
+        userStorage.deleteFriend(userId, friendId);
     }
 
     public List<User> getUserFriends(int userId) {
-        try {
-            User user = userStorage.getUserById(userId);
-            return user.getFriends()
-                    .stream()
-                    .mapToInt(friendId -> friendId)
-                    .mapToObj(this::getUserById)
-                    .collect(Collectors.toList());
-
-        } catch (UserNotExistException e) {
-            log.error(e.getMessage());
-            throw e;
-        }
+        userStorage.getUserById(userId).orElseThrow(UserNotExistException::new);
+        return userStorage.getUserFriends(userId);
     }
 
     public List<User> getCommonFriends(int id, int otherId) {
-        try {
-            User user = userStorage.getUserById(id);
-            User otherUser = userStorage.getUserById(otherId);
+        userStorage.getUserById(id).orElseThrow(UserNotExistException::new);
+        userStorage.getUserById(otherId).orElseThrow(UserNotExistException::new);
 
-            Set<Integer> userFriends = user.getFriends();
-            Set<Integer> otherUserFriends = otherUser.getFriends();
+        List<User> userFriends = userStorage.getUserFriends(id);
+        List<User> otherUserFriends = userStorage.getUserFriends(otherId);
 
-            return userFriends.stream()
-                    .filter(otherUserFriends::contains)
-                    .mapToInt(friendId -> friendId)
-                    .mapToObj(this::getUserById)
-                    .collect(Collectors.toList());
-
-        } catch (UserNotExistException e) {
-            log.error(e.getMessage());
-            throw e;
-        }
+        return userFriends.stream()
+                .filter(otherUserFriends::contains)
+                .collect(Collectors.toList());
     }
 
     public User getUserById(int id) {
-        return userStorage.getUserById(id);
+        return userStorage.getUserById(id).orElseThrow(UserNotExistException::new);
     }
 }
